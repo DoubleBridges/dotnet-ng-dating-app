@@ -29,7 +29,7 @@ namespace API.Data
                 context.Users.Add(user);
             }
 
-            context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
     }
 }
