@@ -3,14 +3,17 @@ import { Injectable } from '@angular/core';
 import {map} from 'rxjs/operators';
 import {User} from '../_models/user';
 import {ReplaySubject} from 'rxjs';
+import {environment} from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
+
 export class AccountService {
-  baseUrl = 'https://localhost:5001/api/';
+
   private currentUserSource = new ReplaySubject<User>(1);
   currentUser$ = this.currentUserSource.asObservable();
+  baseUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
@@ -45,4 +48,5 @@ export class AccountService {
     localStorage.removeItem('user');
     this.currentUserSource.next(null);
   }
+
 }
