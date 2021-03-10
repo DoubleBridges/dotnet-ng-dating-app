@@ -1,3 +1,7 @@
+.container-fluid {
+  max-width: 1140px;
+}
+
 .dropdown-toggle,
 .dropdown-item {
   cursor: pointer;
