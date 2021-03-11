@@ -1,34 +1,53 @@
 using System.Collections.Generic;
-using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
-using API.Data;
-using API.Entities;
+using API.DTOs;
+using API.Interfaces;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class UsersController : ControllerBase
+  [Authorize]
+  public class UsersController : BaseApiController
+  {
+    private readonly IUserRepository _repository;
+    private readonly IMapper _mapper;
+
+    public UsersController(IUserRepository repository, IMapper mapper)
     {
-        private readonly DataContext _context;
-
-        public UsersController(DataContext context)
-        {
-            _context = context;
-        }
-
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<AppUser>>> GetUsers()
-        {
-            return await _context.Users.ToListAsync();
-        }
-        
-        [HttpGet("{id}")]
-        public async Task<ActionResult<AppUser>> GetUsers(int id)
-        {
-            return await _context.Users.FindAsync(id);
-        }
+      _repository = repository;
+      _mapper = mapper;
     }
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<MemberDto>>> GetUsers()
+    {
+      var users = await _repository.GetUsersAsync();
+      var userToReturn = _mapper.Map<IEnumerable<MemberDto>>(users);
+      return Ok(userToReturn);
+    }
+
+    [HttpGet("{userName}")]
+    public async Task<ActionResult<MemberDto>> GetUser(string userName)
+    {
+      return await _repository.GetMemberAsync(userName);
+    }
+
+    [HttpPut]
+    public async Task<ActionResult> UpdateUser(MemberUpdateDto memberUpdateDto)
+    {
+      var userName = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+      var user = await _repository.GetUserByUserNameAsync(userName);
+
+      _mapper.Map(memberUpdateDto, user);
+
+      _repository.Update(user);
+
+      if (await _repository.SaveAllAsync()) NoContent();
+      
+      return BadRequest("Failed to update user");
+    }
+  }
 }
