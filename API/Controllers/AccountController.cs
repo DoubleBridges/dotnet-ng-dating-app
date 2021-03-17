@@ -1,4 +1,4 @@
-using System;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -49,7 +49,9 @@ namespace API.Controllers
     [HttpPost("login")]
     public async Task<ActionResult<UserDto>> Login(LoginDTO loginDto)
     {
-      var user = await _context.Users.SingleOrDefaultAsync(x => x.UserName.ToLower() == loginDto.UserName.ToLower());
+      var user = await _context.Users
+        .Include(u => u.Photos)
+        .SingleOrDefaultAsync(x => x.UserName.ToLower() == loginDto.UserName.ToLower());
 
       if (user == null) return Unauthorized(("Invalid User Name"));
 
@@ -65,7 +67,8 @@ namespace API.Controllers
       return new UserDto
       {
         UserName = user.UserName,
-        Token = _tokenService.CreateToken(user)
+        Token = _tokenService.CreateToken(user),
+        PhotoUrl = user.Photos.FirstOrDefault(photo => photo.IsMain)?.Url
       };
     }
 
